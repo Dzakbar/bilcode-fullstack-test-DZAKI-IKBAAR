@@ -12,9 +12,9 @@ class HealthTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertJson([
-                'status' => 'ok',
-                'service' => 'projectpulse-backend',
-            ]);
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', 'ProjectPulse backend is healthy')
+            ->assertJsonPath('data.status', 'ok')
+            ->assertJsonPath('data.service', 'projectpulse-backend');
     }
 }
