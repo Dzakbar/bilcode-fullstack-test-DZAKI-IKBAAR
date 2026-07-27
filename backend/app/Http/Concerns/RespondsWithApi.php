@@ -3,6 +3,8 @@
 namespace App\Http\Concerns;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 trait RespondsWithApi
 {
@@ -28,5 +30,26 @@ trait RespondsWithApi
             'message' => $message,
             'errors' => $errors,
         ], $status);
+    }
+
+    protected function paginatedResponse(string $message, AnonymousResourceCollection $collection, LengthAwarePaginator $paginator): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data' => $collection->resolve(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
+            'links' => [
+                'first' => $paginator->url(1),
+                'last' => $paginator->url($paginator->lastPage()),
+                'prev' => $paginator->previousPageUrl(),
+                'next' => $paginator->nextPageUrl(),
+            ],
+        ]);
     }
 }

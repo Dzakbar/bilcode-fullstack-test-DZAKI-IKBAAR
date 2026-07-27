@@ -8,6 +8,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Middleware\HandleCors;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -56,6 +57,16 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => 'Validation failed',
                     'errors' => $exception->errors(),
                 ], 422);
+            }
+        });
+
+        $exceptions->render(function (ModelNotFoundException $exception, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Resource not found.',
+                    'errors' => [],
+                ], 404);
             }
         });
     })->create();

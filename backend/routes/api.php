@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ClientController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -23,3 +24,9 @@ Route::prefix('auth')->group(function (): void {
         Route::post('/logout', [AuthController::class, 'logout']);
     });
 });
+
+Route::middleware(['auth:sanctum', 'role:admin'])
+    ->prefix('admin')
+    ->group(function (): void {
+        Route::apiResource('clients', ClientController::class);
+    });
