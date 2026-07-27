@@ -1,6 +1,20 @@
-# TODO: ganti isi Dockerfile ini sesuai stack web yang dipilih (Next.js, atau build Blade lewat backend).
-# Contoh referensi tersedia di docs/dockerfile-examples/Dockerfile.nextjs.example
-#
-# Ketentuan wajib (lihat root README.md):
-#   - Image harus bisa dibangun ulang dari source (`docker build .`) tanpa langkah manual tambahan.
-#   - Jangan hardcode secret/API key di sini — gunakan environment variable saat runtime/build.
+FROM node:24-alpine AS build
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+
+ARG VITE_API_BASE_URL=http://localhost:8000/api
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
+RUN npm run build
+
+FROM nginx:1.27-alpine
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+
+EXPOSE 80
