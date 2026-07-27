@@ -1,12 +1,15 @@
+# Requires an ingress-nginx controller in the local cluster (for example,
+# `minikube addons enable ingress`). Map projectpulse.local to the ingress IP.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: projectpulse-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+  labels:
+    app.kubernetes.io/part-of: projectpulse
 spec:
+  ingressClassName: nginx
   rules:
-    - host: projectpulse.local   # TODO: sesuaikan, tambahkan ke /etc/hosts saat pakai minikube/kind
+    - host: projectpulse.local
       http:
         paths:
           - path: /api
@@ -22,4 +25,4 @@ spec:
               service:
                 name: projectpulse-web
                 port:
-                  number: 3000
+                  number: 80

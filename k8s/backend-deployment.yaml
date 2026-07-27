@@ -3,23 +3,30 @@ kind: Deployment
 metadata:
   name: projectpulse-backend
   labels:
-    app: projectpulse-backend
+    app.kubernetes.io/name: projectpulse-backend
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: projectpulse
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: projectpulse-backend
+      app.kubernetes.io/name: projectpulse-backend
   template:
     metadata:
       labels:
-        app: projectpulse-backend
+        app.kubernetes.io/name: projectpulse-backend
+        app.kubernetes.io/component: api
+        app.kubernetes.io/part-of: projectpulse
     spec:
       containers:
         - name: backend
-          # TODO: ganti dengan image hasil `docker build` kamu, mis. ghcr.io/<org>/projectpulse-backend:latest
-          image: projectpulse-backend:latest
+          # Local image: build it locally, then load it into minikube/kind/k3d.
+          image: projectpulse-backend:local
+          imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8000
+            - name: http
+              containerPort: 8000
+              protocol: TCP
           envFrom:
             - configMapRef:
                 name: projectpulse-config
@@ -27,13 +34,24 @@ spec:
                 name: projectpulse-secret
           readinessProbe:
             httpGet:
-              path: /health
-              port: 8000
+              path: /api/health
+              port: http
             initialDelaySeconds: 5
             periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
           livenessProbe:
             httpGet:
-              path: /health
-              port: 8000
-            initialDelaySeconds: 10
+              path: /api/health
+              port: http
+            initialDelaySeconds: 20
             periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

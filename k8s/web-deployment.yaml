@@ -3,29 +3,50 @@ kind: Deployment
 metadata:
   name: projectpulse-web
   labels:
-    app: projectpulse-web
+    app.kubernetes.io/name: projectpulse-web
+    app.kubernetes.io/component: web
+    app.kubernetes.io/part-of: projectpulse
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: projectpulse-web
+      app.kubernetes.io/name: projectpulse-web
   template:
     metadata:
       labels:
-        app: projectpulse-web
+        app.kubernetes.io/name: projectpulse-web
+        app.kubernetes.io/component: web
+        app.kubernetes.io/part-of: projectpulse
     spec:
       containers:
         - name: web
-          # TODO: ganti dengan image hasil `docker build` kamu, mis. ghcr.io/<org>/projectpulse-web:latest
-          image: projectpulse-web:latest
+          # Local image: build it locally, then load it into minikube/kind/k3d.
+          image: projectpulse-web:local
+          imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 3000
-          env:
-            - name: NEXT_PUBLIC_API_URL
-              value: "http://projectpulse-backend:8000"
+            - name: http
+              containerPort: 80
+              protocol: TCP
           readinessProbe:
             httpGet:
               path: /
-              port: 3000
-            initialDelaySeconds: 5
+              port: http
+            initialDelaySeconds: 3
             periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi

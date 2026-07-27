@@ -1,0 +1,97 @@
+# A default StorageClass is available in minikube, kind, and k3d local clusters.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: projectpulse-postgres-data
+  labels:
+    app.kubernetes.io/name: projectpulse-postgres
+    app.kubernetes.io/part-of: projectpulse
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: projectpulse-postgres
+  labels:
+    app.kubernetes.io/name: projectpulse-postgres
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: projectpulse
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: projectpulse-postgres
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: projectpulse-postgres
+        app.kubernetes.io/component: database
+        app.kubernetes.io/part-of: projectpulse
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: postgres
+              containerPort: 5432
+              protocol: TCP
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: projectpulse-config
+                  key: DB_DATABASE
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: projectpulse-secret
+                  key: DB_USERNAME
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: projectpulse-secret
+                  key: DB_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready --username="$POSTGRES_USER" --dbname="$POSTGRES_DB"
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready --username="$POSTGRES_USER" --dbname="$POSTGRES_DB"
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: projectpulse-postgres-data
