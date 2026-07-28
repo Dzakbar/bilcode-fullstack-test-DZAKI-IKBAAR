@@ -16,11 +16,11 @@ Members receive HTTP `403`. Requests without a valid bearer token receive HTTP `
 
 ## List clients
 
-`GET /admin/clients`
+`GET /clients`
 
 Query parameters:
 
-- `search`: optional string, searches `name`, `contact`, and `company`.
+- `search`: optional string, searches `name`, `email`, and `company`.
 - `company`: optional string, filters by company.
 - `per_page`: optional integer, default `10`, maximum `100`.
 - `sort`: optional, one of `name`, `company`, `created_at`, `updated_at`; default `created_at`.
@@ -36,7 +36,7 @@ Success response:
     {
       "id": 1,
       "name": "PT Example Indonesia",
-      "contact": "081234567890",
+      "email": "client@example.test",
       "company": "Example Group",
       "projects_count": 0,
       "created_at": "2026-07-27T10:00:00+00:00",
@@ -50,8 +50,8 @@ Success response:
     "total": 1
   },
   "links": {
-    "first": "http://localhost:8000/api/admin/clients?page=1",
-    "last": "http://localhost:8000/api/admin/clients?page=1",
+    "first": "http://localhost:8000/api/clients?page=1",
+    "last": "http://localhost:8000/api/clients?page=1",
     "prev": null,
     "next": null
   }
@@ -60,14 +60,14 @@ Success response:
 
 ## Create client
 
-`POST /admin/clients`
+`POST /clients`
 
 Request:
 
 ```json
 {
   "name": "PT Example Indonesia",
-  "contact": "081234567890",
+  "email": "client@example.test",
   "company": "Example Group"
 }
 ```
@@ -81,7 +81,7 @@ Success response, HTTP `201`:
   "data": {
     "id": 1,
     "name": "PT Example Indonesia",
-    "contact": "081234567890",
+    "email": "client@example.test",
     "company": "Example Group",
     "projects_count": 0,
     "created_at": "2026-07-27T10:00:00+00:00",
@@ -98,14 +98,14 @@ Validation response, HTTP `422`:
   "message": "Validation failed",
   "errors": {
     "name": ["The client name is required."],
-    "contact": ["The client contact is required."]
+    "email": ["The client email is required."]
   }
 }
 ```
 
 ## Show client
 
-`GET /admin/clients/{client}`
+`GET /clients/{client}`
 
 Success response:
 
@@ -116,7 +116,7 @@ Success response:
   "data": {
     "id": 1,
     "name": "PT Example Indonesia",
-    "contact": "081234567890",
+    "email": "client@example.test",
     "company": "Example Group",
     "projects_count": 0,
     "created_at": "2026-07-27T10:00:00+00:00",
@@ -137,9 +137,9 @@ Not found response, HTTP `404`:
 
 ## Update client
 
-`PUT /admin/clients/{client}`
+`PUT /clients/{client}`
 
-`PATCH /admin/clients/{client}`
+`PATCH /clients/{client}`
 
 Partial updates are supported. Omitted fields are preserved.
 
@@ -147,7 +147,7 @@ Request:
 
 ```json
 {
-  "contact": "client-updated@example.test"
+  "email": "client-updated@example.test"
 }
 ```
 
@@ -160,7 +160,7 @@ Success response:
   "data": {
     "id": 1,
     "name": "PT Example Indonesia",
-    "contact": "client-updated@example.test",
+    "email": "client-updated@example.test",
     "company": "Example Group",
     "projects_count": 0,
     "created_at": "2026-07-27T10:00:00+00:00",
@@ -171,7 +171,7 @@ Success response:
 
 ## Delete client
 
-`DELETE /admin/clients/{client}`
+`DELETE /clients/{client}`
 
 Clients with related projects cannot be deleted. Reassign or delete related projects first.
 

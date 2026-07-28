@@ -6,8 +6,7 @@ if [ -z "${APP_KEY:-}" ] && [ -f /run/secrets/backend_env ]; then
     export APP_KEY
 fi
 
-if [ ! -f .env ] && [ -f /run/secrets/backend_env ]; then
-    cp /run/secrets/backend_env .env
-fi
+rm -f .env
+php artisan optimize:clear >/dev/null 2>&1 || true
 
 exec "$@"

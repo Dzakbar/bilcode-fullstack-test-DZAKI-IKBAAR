@@ -1,9 +1,18 @@
-import { Outlet } from 'react-router'
+import { Navigate, Outlet, useLocation } from 'react-router'
+import { useAuth } from '../auth/AuthContext'
+import { LoadingState } from '../components/LoadingState'
 
-/**
- * Authentication is deliberately deferred. This boundary keeps future protected
- * routes grouped without introducing a temporary or fake authentication flow.
- */
 export function ProtectedRoute() {
+  const location = useLocation()
+  const { isAuthenticated, isInitializing } = useAuth()
+
+  if (isInitializing) {
+    return <LoadingState label="Restoring your admin session..." />
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location }} />
+  }
+
   return <Outlet />
 }

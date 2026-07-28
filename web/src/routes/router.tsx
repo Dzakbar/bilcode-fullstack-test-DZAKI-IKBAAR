@@ -1,35 +1,70 @@
-import { createBrowserRouter, Navigate } from 'react-router'
+import { createBrowserRouter } from 'react-router'
 import { AppLayout } from '../layouts/AppLayout'
 import { DashboardPage } from '../pages/DashboardPage'
+import { ClientFormPage } from '../pages/clients/ClientFormPage'
+import { ClientsPage } from '../pages/clients/ClientsPage'
 import { LoginPage } from '../pages/LoginPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
+import { ProjectFormPage } from '../pages/projects/ProjectFormPage'
+import { ProjectsPage } from '../pages/projects/ProjectsPage'
 import { ProtectedRoute } from './ProtectedRoute'
+import { PublicOnlyRoute } from './PublicOnlyRoute'
+import { RootRedirect } from './RootRedirect'
 
 export const router = createBrowserRouter([
   {
-    Component: AppLayout,
+    path: '/',
+    Component: RootRedirect,
+  },
+  {
+    Component: PublicOnlyRoute,
     children: [
       {
-        index: true,
-        element: <Navigate to="/dashboard" replace />,
-      },
-      {
-        path: 'login',
+        path: '/login',
         Component: LoginPage,
       },
+    ],
+  },
+  {
+    Component: ProtectedRoute,
+    children: [
       {
-        Component: ProtectedRoute,
+        Component: AppLayout,
         children: [
           {
-            path: 'dashboard',
+            path: '/dashboard',
             Component: DashboardPage,
+          },
+          {
+            path: '/clients',
+            Component: ClientsPage,
+          },
+          {
+            path: '/clients/create',
+            Component: ClientFormPage,
+          },
+          {
+            path: '/clients/:id/edit',
+            Component: ClientFormPage,
+          },
+          {
+            path: '/projects',
+            Component: ProjectsPage,
+          },
+          {
+            path: '/projects/create',
+            Component: ProjectFormPage,
+          },
+          {
+            path: '/projects/:id/edit',
+            Component: ProjectFormPage,
           },
         ],
       },
-      {
-        path: '*',
-        Component: NotFoundPage,
-      },
     ],
+  },
+  {
+    path: '*',
+    Component: NotFoundPage,
   },
 ])

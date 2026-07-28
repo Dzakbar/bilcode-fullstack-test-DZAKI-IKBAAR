@@ -75,16 +75,16 @@ class ClientCrudTest extends TestCase
             ->assertJsonPath('data.0.name', 'Acme Indonesia');
     }
 
-    public function test_admin_can_search_clients_by_contact(): void
+    public function test_admin_can_search_clients_by_email(): void
     {
-        Client::factory()->create(['contact' => '081234567890']);
-        Client::factory()->create(['contact' => 'hello@example.test']);
+        Client::factory()->create(['email' => 'client8123@example.test']);
+        Client::factory()->create(['email' => 'hello@example.test']);
 
         $this->actingAsAdmin()
             ->getJson('/api/admin/clients?search=8123')
             ->assertOk()
             ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.contact', '081234567890');
+            ->assertJsonPath('data.0.email', 'client8123@example.test');
     }
 
     public function test_admin_can_filter_clients_by_company(): void
@@ -113,7 +113,7 @@ class ClientCrudTest extends TestCase
         $this->actingAsAdmin()
             ->postJson('/api/admin/clients', [
                 'name' => 'PT Example Indonesia',
-                'contact' => '081234567890',
+                'email' => 'client@example.test',
                 'company' => 'Example Group',
             ])
             ->assertCreated()
@@ -124,9 +124,20 @@ class ClientCrudTest extends TestCase
 
         $this->assertDatabaseHas('clients', [
             'name' => 'PT Example Indonesia',
-            'contact' => '081234567890',
+            'email' => 'client@example.test',
             'company' => 'Example Group',
         ]);
+    }
+
+    public function test_admin_can_list_clients_from_public_api_clients_path(): void
+    {
+        Client::factory()->count(2)->create();
+
+        $this->actingAsAdmin()
+            ->getJson('/api/clients')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonCount(2, 'data');
     }
 
     public function test_create_validates_required_name(): void
@@ -134,21 +145,21 @@ class ClientCrudTest extends TestCase
         $this->actingAsAdmin()
             ->postJson('/api/admin/clients', [
                 'name' => '   ',
-                'contact' => 'client@example.test',
+                'email' => 'client@example.test',
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['name']);
     }
 
-    public function test_create_validates_required_contact(): void
+    public function test_create_validates_required_email(): void
     {
         $this->actingAsAdmin()
             ->postJson('/api/admin/clients', [
                 'name' => 'Client Name',
-                'contact' => '',
+                'email' => '',
             ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['contact']);
+            ->assertJsonValidationErrors(['email']);
     }
 
     public function test_company_may_be_null(): void
@@ -156,7 +167,7 @@ class ClientCrudTest extends TestCase
         $this->actingAsAdmin()
             ->postJson('/api/admin/clients', [
                 'name' => 'Client Without Company',
-                'contact' => 'client@example.test',
+                'email' => 'client@example.test',
                 'company' => null,
             ])
             ->assertCreated()
@@ -189,35 +200,35 @@ class ClientCrudTest extends TestCase
 
     public function test_admin_can_update_one_client(): void
     {
-        $client = Client::factory()->create(['contact' => 'old@example.test']);
+        $client = Client::factory()->create(['email' => 'old@example.test']);
 
         $this->actingAsAdmin()
             ->putJson("/api/admin/clients/{$client->id}", [
                 'name' => 'Updated Client',
-                'contact' => 'updated@example.test',
+                'email' => 'updated@example.test',
                 'company' => 'Updated Company',
             ])
             ->assertOk()
             ->assertJsonPath('message', 'Client updated successfully')
             ->assertJsonPath('data.name', 'Updated Client')
-            ->assertJsonPath('data.contact', 'updated@example.test');
+            ->assertJsonPath('data.email', 'updated@example.test');
     }
 
     public function test_partial_update_preserves_omitted_fields(): void
     {
         $client = Client::factory()->create([
             'name' => 'Original Name',
-            'contact' => 'old@example.test',
+            'email' => 'old@example.test',
             'company' => 'Original Company',
         ]);
 
         $this->actingAsAdmin()
             ->patchJson("/api/admin/clients/{$client->id}", [
-                'contact' => 'new@example.test',
+                'email' => 'new@example.test',
             ])
             ->assertOk()
             ->assertJsonPath('data.name', 'Original Name')
-            ->assertJsonPath('data.contact', 'new@example.test')
+            ->assertJsonPath('data.email', 'new@example.test')
             ->assertJsonPath('data.company', 'Original Company');
     }
 
@@ -226,7 +237,7 @@ class ClientCrudTest extends TestCase
         $this->actingAsMember()
             ->postJson('/api/admin/clients', [
                 'name' => 'Blocked Client',
-                'contact' => 'blocked@example.test',
+                'email' => 'blocked@example.test',
             ])
             ->assertForbidden();
     }
@@ -315,7 +326,7 @@ class ClientCrudTest extends TestCase
         $this->actingAsAdmin()
             ->postJson('/api/admin/clients', [
                 'name' => '',
-                'contact' => '',
+                'email' => '',
             ])
             ->assertUnprocessable()
             ->assertJsonStructure([
@@ -323,7 +334,7 @@ class ClientCrudTest extends TestCase
                 'message',
                 'errors' => [
                     'name',
-                    'contact',
+                    'email',
                 ],
             ])
             ->assertJsonPath('success', false)

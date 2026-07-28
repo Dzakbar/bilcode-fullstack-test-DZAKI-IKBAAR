@@ -31,10 +31,10 @@ class ProjectController extends Controller
                 $search = $validated['search'];
 
                 $query->where(function (Builder $query) use ($search): void {
-                    $this->caseInsensitiveWhere($query, 'name', $search, 'or');
+                    $this->caseInsensitiveWhere($query, 'name', $search);
                     $this->caseInsensitiveWhere($query, 'brief', $search, 'or');
                     $query->orWhereHas('client', function (Builder $query) use ($search): void {
-                        $this->caseInsensitiveWhere($query, 'name', $search, 'or');
+                        $this->caseInsensitiveWhere($query, 'name', $search);
                         $this->caseInsensitiveWhere($query, 'company', $search, 'or');
                     });
                 });

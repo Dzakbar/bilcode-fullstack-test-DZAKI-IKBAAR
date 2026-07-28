@@ -67,7 +67,7 @@ class ProjectCrudTest extends TestCase
         $client = Client::factory()->create([
             'name' => 'PT Example Indonesia',
             'company' => 'Example Group',
-            'contact' => 'private-contact@example.test',
+            'email' => 'private-client@example.test',
         ]);
         Project::factory()->for($client)->create();
 

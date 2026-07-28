@@ -36,6 +36,13 @@ class IndexProjectRequest extends ApiFormRequest
             }
         }
 
+        if ($this->has('overdue') && is_string($this->input('overdue'))) {
+            $value = strtolower(trim((string) $this->input('overdue')));
+            if (in_array($value, ['true', 'false'], true)) {
+                $prepared['overdue'] = $value === 'true';
+            }
+        }
+
         $this->merge($prepared);
     }
 

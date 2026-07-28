@@ -57,12 +57,12 @@ class DatabaseSeeder extends Seeder
         $clients = collect([
             Client::factory()->create([
                 'name' => 'Acme Operations',
-                'contact' => 'ops@acme.test',
+                'email' => 'ops@acme.test',
                 'company' => 'Acme',
             ]),
             Client::factory()->create([
                 'name' => 'Northwind Studio',
-                'contact' => 'hello@northwind.test',
+                'email' => 'hello@northwind.test',
                 'company' => 'Northwind',
             ]),
         ]);

@@ -29,8 +29,11 @@ class ClientController extends Controller
                 $search = $validated['search'];
 
                 $query->where(function ($query) use ($search): void {
-                    foreach (['name', 'contact', 'company'] as $column) {
-                        $this->caseInsensitiveWhere($query, $column, $search, 'or');
+                    $isFirstColumn = true;
+
+                    foreach (['name', 'email', 'company'] as $column) {
+                        $this->caseInsensitiveWhere($query, $column, $search, $isFirstColumn ? 'and' : 'or');
+                        $isFirstColumn = false;
                     }
                 });
             })

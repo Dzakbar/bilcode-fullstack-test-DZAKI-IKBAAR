@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -20,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(HandleCors::class);
+        $middleware->redirectGuestsTo(fn (Request $request): ?string => null);
 
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
@@ -61,6 +63,16 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (ModelNotFoundException $exception, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Resource not found.',
+                    'errors' => [],
+                ], 404);
+            }
+        });
+
+        $exceptions->render(function (NotFoundHttpException $exception, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json([
                     'success' => false,

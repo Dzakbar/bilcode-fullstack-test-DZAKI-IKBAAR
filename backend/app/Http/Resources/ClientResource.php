@@ -15,7 +15,7 @@ class ClientResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'contact' => $this->contact,
+            'email' => $this->email,
             'company' => $this->company,
             'projects_count' => $this->whenCounted('projects'),
             'created_at' => $this->created_at?->toIso8601String(),
