@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
@@ -53,6 +54,25 @@ class AuthController extends Controller
         auth('sanctum')->forgetUser();
 
         return $this->successResponse('Logout successful');
+    }
+
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => ['required', 'string', 'max:255'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->errorResponse('Validation failed', $validator->errors()->toArray(), 422);
+        }
+
+        $user = $request->user();
+        $user->name = $request->input('name');
+        $user->save();
+
+        return $this->successResponse('Profile updated successfully', [
+            'user' => UserResource::make($user)->resolve(),
+        ]);
     }
 
     private function login(

@@ -25,23 +25,26 @@ Route::prefix('auth')->group(function (): void {
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
+        Route::put('/profile', [AuthController::class, 'updateProfile']);
     });
 });
 
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function (): void {
-    Route::get('/clients', [ClientController::class, 'index']);
-    Route::post('/clients', [ClientController::class, 'store']);
-    Route::get('/clients/{client}', [ClientController::class, 'show']);
-    Route::put('/clients/{client}', [ClientController::class, 'update']);
-    Route::patch('/clients/{client}', [ClientController::class, 'update']);
-    Route::delete('/clients/{client}', [ClientController::class, 'destroy']);
+    // Legacy routes removed to prevent 404 conflicts.
+    // Use /admin/clients and /admin/projects instead.
+});
 
-    Route::get('/projects', [ProjectController::class, 'index']);
-    Route::post('/projects', [ProjectController::class, 'store']);
-    Route::get('/projects/{project}', [ProjectController::class, 'show']);
-    Route::put('/projects/{project}', [ProjectController::class, 'update']);
-    Route::patch('/projects/{project}', [ProjectController::class, 'update']);
-    Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
+// Mobile API routes (accessible by any authenticated user, role check in controller)
+Route::middleware('auth:sanctum')->prefix('mobile')->group(function (): void {
+    Route::get('/profile', [AuthController::class, 'me']);
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
+    Route::get('/tasks', [\App\Http\Controllers\Mobile\MemberTaskController::class, 'index']);
+    Route::get('/tasks/{task}', [TaskController::class, 'show']);
+    Route::patch('/tasks/{task}/status', [\App\Http\Controllers\Mobile\MemberTaskController::class, 'updateStatus']);
+    Route::post('/tasks/{task}/time-logs', [\App\Http\Controllers\Mobile\TimeLogController::class, 'store']);
+    Route::get('/tasks/{task}/time-logs', [\App\Http\Controllers\Mobile\TimeLogController::class, 'index']);
+    Route::get('/notifications', [\App\Http\Controllers\Mobile\NotificationController::class, 'index']);
+    Route::patch('/notifications/{notification}/read', [\App\Http\Controllers\Mobile\NotificationController::class, 'markAsRead']);
 });
 
 Route::middleware(['auth:sanctum', 'role:admin'])
@@ -51,5 +54,11 @@ Route::middleware(['auth:sanctum', 'role:admin'])
         Route::apiResource('projects', ProjectController::class);
         Route::apiResource('tasks', TaskController::class);
         Route::get('members', [MemberController::class, 'index']);
+        Route::get('dashboard/summary', [\App\Http\Controllers\DashboardController::class, 'summary']);
+
+        Route::prefix('ai')->group(function (): void {
+            Route::post('/breakdown', [\App\Http\Controllers\Admin\AIController::class, 'breakdown']);
+            Route::post('/save-tasks', [\App\Http\Controllers\Admin\AIController::class, 'saveTasks']);
+        });
     });
 

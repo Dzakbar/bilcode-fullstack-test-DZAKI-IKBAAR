@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\TaskCategory;
 use App\Enums\TaskStatus;
+use App\Observers\TaskObserver;
 use Database\Factories\TaskFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,6 +17,11 @@ class Task extends Model
 {
     /** @use HasFactory<TaskFactory> */
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::observe(TaskObserver::class);
+    }
 
     public function project(): BelongsTo
     {

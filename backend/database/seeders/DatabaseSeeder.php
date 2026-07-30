@@ -37,19 +37,19 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $developerOne = User::factory()->developer()->create([
-            'name' => 'Developer One',
+            'name' => 'Andi Pratama',
             'email' => 'developer1@projectpulse.test',
             'password' => 'password',
         ]);
 
         $developerTwo = User::factory()->developer()->create([
-            'name' => 'Developer Two',
+            'name' => 'Budi Santoso',
             'email' => 'developer2@projectpulse.test',
             'password' => 'password',
         ]);
 
         $designer = User::factory()->designer()->create([
-            'name' => 'Designer One',
+            'name' => 'Citra Dewi',
             'email' => 'designer1@projectpulse.test',
             'password' => 'password',
         ]);

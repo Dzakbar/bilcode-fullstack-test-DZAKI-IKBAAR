@@ -71,13 +71,13 @@ class TaskCrudTest extends TestCase
 
     public function test_listing_includes_assignee(): void
     {
-        $member = User::factory()->developer()->create(['name' => 'Developer One']);
+        $member = User::factory()->developer()->create(['name' => 'Andi Pratama']);
         Task::factory()->for($member, 'assignee')->create();
 
         $this->actingAsAdmin()
             ->getJson('/api/admin/tasks')
             ->assertOk()
-            ->assertJsonPath('data.0.assignee.name', 'Developer One')
+            ->assertJsonPath('data.0.assignee.name', 'Andi Pratama')
             ->assertJsonMissingPath('data.0.assignee.password')
             ->assertJsonMissingPath('data.0.assignee.remember_token');
     }
@@ -445,9 +445,9 @@ class TaskCrudTest extends TestCase
 
     public function test_admin_can_list_members(): void
     {
-        User::factory()->developer()->create(['name' => 'Developer One']);
+        User::factory()->developer()->create(['name' => 'Andi Pratama']);
 
-        $this->actingAsAdmin()->getJson('/api/admin/members')->assertOk()->assertJsonPath('message', 'Members retrieved successfully')->assertJsonPath('data.0.name', 'Developer One');
+        $this->actingAsAdmin()->getJson('/api/admin/members')->assertOk()->assertJsonPath('message', 'Members retrieved successfully')->assertJsonPath('data.0.name', 'Andi Pratama');
     }
 
     public function test_member_list_excludes_admin_users(): void
@@ -463,8 +463,8 @@ class TaskCrudTest extends TestCase
 
     public function test_member_list_supports_profession_filter(): void
     {
-        User::factory()->developer()->create(['name' => 'Developer One']);
-        User::factory()->designer()->create(['name' => 'Designer One']);
+        User::factory()->developer()->create(['name' => 'Andi Pratama']);
+        User::factory()->designer()->create(['name' => 'Citra Dewi']);
 
         $this->actingAsAdmin()->getJson('/api/admin/members?profession=designer')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.profession', MemberProfession::DESIGNER->value);
     }

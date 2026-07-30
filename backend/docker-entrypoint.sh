@@ -1,12 +1,14 @@
 #!/bin/sh
 set -eu
 
-if [ -z "${APP_KEY:-}" ] && [ -f /run/secrets/backend_env ]; then
-    APP_KEY="$(grep '^APP_KEY=' /run/secrets/backend_env | cut -d= -f2- | tr -d '\r')"
-    export APP_KEY
+if [ -f /run/secrets/backend_env ]; then
+    if [ -z "${APP_KEY:-}" ]; then
+        APP_KEY="$(grep '^APP_KEY=' /run/secrets/backend_env | cut -d= -f2- | tr -d '\r')"
+        export APP_KEY
+    fi
+    cp /run/secrets/backend_env .env
 fi
 
-rm -f .env
 php artisan optimize:clear >/dev/null 2>&1 || true
 
 exec "$@"
