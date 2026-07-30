@@ -21,6 +21,7 @@ export function AppLayout() {
           <SidebarNavItem label="Projects" to="/projects" />
           <SidebarNavItem label="Tasks" to="/tasks" />
           <SidebarNavItem label="AI Breakdown" to="/ai/breakdown" />
+          <SidebarNavItem label="Reports" to="/reports" />
         </nav>
       </aside>
       <div className="admin-content">

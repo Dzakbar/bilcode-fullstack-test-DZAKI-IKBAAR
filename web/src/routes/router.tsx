@@ -13,6 +13,7 @@ import { RootRedirect } from './RootRedirect'
 
 import TasksPage from '../pages/tasks/TasksPage'
 import { AIBreakdownPage } from '../pages/ai/AIBreakdownPage'
+import { ReportsPage } from '../pages/reports/ReportsPage'
 
 export const router = createBrowserRouter([
   {
@@ -69,6 +70,10 @@ export const router = createBrowserRouter([
           {
             path: '/ai/breakdown',
             Component: AIBreakdownPage,
+          },
+          {
+            path: '/reports',
+            Component: ReportsPage,
           },
         ],
       },
