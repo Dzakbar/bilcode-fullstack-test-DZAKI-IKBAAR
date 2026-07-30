@@ -1,180 +1,284 @@
-# Take-Home Technical Test — Full Stack Developer
+# ProjectPulse
 
-**Bilcode Technology** · Seleksi Kandidat
-Studi Kasus: **ProjectPulse — Platform Manajemen Klien & Proyek Internal**
+Platform Manajemen Klien & Proyek Internal — Full Stack Application.
 
-> Dokumen ini adalah instruksi resmi pengerjaan technical test untuk kandidat yang **lolos ke tahap coding test**. Baca menyeluruh sebelum mulai. Setiap baris kode yang disubmit harus bisa kamu jelaskan saat wawancara teknis.
-
----
-
-## Ringkasan
-
-| | |
+| Layer | Stack |
 |---|---|
-| **Posisi** | Full Stack Developer |
-| **Estimasi waktu** | 4 hari kerja (atur ritme sesuai deadline dengan recruiter) |
-| **Submission** | Repository Git (akses ke recruiter) — `backend/`, `web/`, `mobile/`, `k8s/` + `README.md` |
-| **Yang diuji** | Web dev · Mobile dev · Integrasi ML · Git/GitHub · Docker & Kubernetes |
-
-**Konteks:** Bilcode mengerjakan banyak proyek klien paralel. PM/admin butuh **web** untuk kelola klien, proyek, & task tim. Developer/desainer butuh **aplikasi mobile** untuk lihat task yang di-assign & lapor progres. Keduanya berbagi **satu backend API** yang sama, plus satu fitur berbasis **ML**.
-
----
-
-## Kebebasan Teknis
-
-- **Backend:** Laravel **atau** Next.js (API routes/Route Handlers).
-- **Mobile:** pilih salah satu — **Ionic (paling diutamakan)** → React Native (setara) → **Flutter (poin preferensi terkecil)**. Semua tetap dinilai penuh dari sisi kualitas implementasi.
-- **Database:** bebas (MySQL/PostgreSQL/dsb).
-- **ML:** wajib pakai model/API pretrained (OpenAI/Gemini/Hugging Face). Yang dinilai **kualitas integrasi**, bukan akurasi/orisinalitas model.
-- **AI coding assistant** boleh dipakai, tapi kamu wajib paham & bisa menjelaskan setiap bagian kode.
+| **Backend** | Laravel 13 (PHP 8.3), PostgreSQL, Sanctum Auth |
+| **Web** | React 19, TypeScript, Vite, Tailwind CSS 4 |
+| **Mobile** | Ionic 8 + React 19 + Capacitor |
+| **ML** | AI-assisted task breakdown (OpenRouter / Gemini) |
+| **Infra** | Docker, Docker Compose, Kubernetes (Helm) |
 
 ---
 
-## Requirement Functional — Tahap Inti (WAJIB)
+## Prerequisites
 
-1. **Autentikasi** dengan role `admin` (PM, login via web) & `member` (developer/desainer, login via mobile).
-2. **Admin (web):**
-   - CRUD klien (nama, kontak, perusahaan)
-   - CRUD proyek (nama, klien terkait, deadline, status)
-   - CRUD task per proyek (judul, deskripsi, assignee, deadline, status)
-   - Dashboard ringkasan (proyek aktif, task overdue, workload per anggota)
-3. **Member (mobile):**
-   - Lihat task yang di-assign ke dirinya (filter status)
-   - Update status task: `todo → in_progress → review → done`
-   - Tambah catatan progres / log waktu kerja per task
-   - Lihat riwayat task selesai
-4. **Fitur ML — AI-assisted task breakdown:** saat admin buat proyek baru, admin menempel brief klien (teks bebas) → sistem memanggil LLM API untuk menyarankan daftar task + kategori (`frontend`/`backend`/`design`/`QA`) + estimasi effort kasar. Admin bisa **terima/edit/hapus/tambah** saran sebelum disimpan jadi task sungguhan.
-5. **Notifikasi in-app** di mobile saat member dapat task baru atau deadline mendekat (H-1).
-6. **API terdokumentasi** (Postman collection atau OpenAPI/Swagger, disertakan di repo).
-
-## Requirement Functional — Tahap Lanjutan (NILAI TAMBAH)
-
-- Laporan jam kerja per proyek/anggota, ekspor CSV/PDF.
-- Komentar/diskusi kolaboratif per task (multi-user + riwayat siapa/kapan).
-- Papan Kanban drag-and-drop antar status di web.
+- Docker & Docker Compose
+- Node.js 24+, npm
+- PHP 8.3 + Composer (manual dev-only)
+- Helm CLI (Kubernetes-only)
 
 ---
 
-## Requirement Non-Functional
+## Quick Start (Docker Compose)
 
-- Autentikasi **berbasis token** (JWT/Sanctum/Passport) — jangan andalkan session cookie lintas web-mobile.
-- **Validasi input di backend** (bukan hanya di frontend/mobile).
-- Format **response error API konsisten** (status code + pesan jelas) di semua endpoint, termasuk saat LLM API gagal.
-- **Fitur inti tetap jalan penuh** walau AI task breakdown sedang gagal/timeout (ML bersifat *assist*, bukan *blocking*).
-- Mobile bisa jalan di emulator/simulator — sertakan screenshot/video demo singkat di README.
-- **API key JANGAN di-hardcode** / ter-commit. Pakai `.env` (lokal) & `Secret`/`ConfigMap` K8s (cluster). Sertakan `.env.example` + `secret.example.yaml`.
-- Image Docker `backend` & `web` bisa di-`docker build` ulang dari source tanpa langkah manual di luar dokumentasi.
+Cara paling cepat menjalankan seluruh aplikasi:
 
----
+```bash
+# 1. Clone
+git clone <repo-url> && cd bil-code-fullstack-test
 
-## Containerization & Orchestration (WAJIB)
+# 2. Setup environment backend
+cp backend/.env.example backend/.env
+php -r "echo 'APP_KEY=' . base64_encode(random_bytes(32));"  # atau: docker compose run --rm backend php artisan key:generate
 
-- `backend` & `web` **wajib** punya `Dockerfile` masing-masing + bisa jalan bareng via `docker-compose` (dev lokal).
-- **Wajib** manifest **Kubernetes** minimal (Deployment, Service, ConfigMap/Secret, Ingress) untuk `backend` & `web`, deployable ke cluster lokal (minikube/kind/k3d). Tidak wajib deploy ke cloud production.
+# 3. Build & jalankan container
+docker compose build
+docker compose up -d
 
----
+# 4. Migrasi & seed database
+docker compose exec backend php artisan migrate:fresh --seed --force
 
-## API Minimal
-
-```
-POST   /api/auth/login | /api/auth/register
-GET    /api/clients | POST /api/clients
-GET    /api/projects | POST /api/projects
-GET    /api/projects/:id
-POST   /api/projects/:id/tasks/generate    -> saran task dari brief klien (ML)
-GET    /api/projects/:id/tasks | POST /api/projects/:id/tasks
-PATCH  /api/tasks/:id                       -> update task (assignee, deadline — admin)
-PATCH  /api/tasks/:id/status                -> update status (member)
-POST   /api/tasks/:id/time-logs             -> catatan progres/jam kerja (member)
-GET    /api/tasks?assignee=&status=&project_id=
-GET    /api/dashboard/summary               -> ringkasan untuk admin
+# 5. Akses
+# Web:     http://localhost:3000
+# API:     http://localhost:8000/api
+# Mobile:  http://localhost:8100
 ```
 
----
-
-## Tampilan Frontend
-
-**Web (admin/PM):** login · dashboard ringkasan · manajemen klien (CRUD) · manajemen proyek (tempel brief → edit saran AI → simpan task) · daftar & detail task per proyek dengan filter (assignee, status).
-
-**Mobile (member):** login · daftar task ke user (filter status) · detail task (update status, catatan progres/log waktu) · riwayat task selesai · notifikasi in-app (badge/list, push notification tidak wajib).
-
----
-
-## Data Awal (Seeder/Fixture)
-
-- 3–5 klien dummy
-- 3–5 proyek, masing-masing dengan beberapa task
-- Beberapa akun dummy role `admin` & `member`
+> **Catatan:** Untuk hot-reload backend saat development, tambahkan volume mount di `docker-compose.yml`:
+> ```yaml
+> backend:
+>   volumes:
+>     - ./backend:/var/www/html
+> ```
 
 ---
 
-## Struktur Folder yang Direkomendasikan
+## Development (Manual)
+
+### Backend
+
+```bash
+cd backend
+cp .env.example .env
+# Edit .env: isi DB_*, GENERATE APP_KEY
+composer install
+php artisan key:generate
+php artisan migrate:fresh --seed
+php artisan serve --host=0.0.0.0 --port=8000
+```
+
+**Env config penting (.env):**
+```
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=projectpulse
+DB_USERNAME=projectpulse
+DB_PASSWORD=change_me
+
+OPENROUTER_API_KEY=sk-...       # untuk AI feature
+GEMINI_API_KEY=...              # alternatif AI provider
+```
+
+### Web
+
+```bash
+cd web
+cp .env.example .env
+npm install
+npm run dev
+# → http://localhost:5173
+```
+
+### Mobile
+
+```bash
+cd mobile
+cp .env.example .env
+npm install
+npm run dev
+# → http://localhost:8100
+```
+
+---
+
+## Docker
+
+**Build image:**
+```bash
+docker compose build
+```
+
+**Build individual service:**
+```bash
+docker compose build backend
+docker compose build web
+```
+
+**Regenerate data (setelah perubahan seeder/code):**
+```bash
+docker compose build backend
+docker compose up -d
+docker compose exec backend php artisan migrate:fresh --seed --force
+```
+
+---
+
+## Kubernetes
+
+### 1. Setup cluster lokal (contoh dengan kind)
+```bash
+kind create cluster --name projectpulse
+```
+
+### 2. Build image & load ke cluster
+```bash
+docker compose build
+kind load docker-image bil-code-fullstack-test-backend:latest --name projectpulse
+kind load docker-image bil-code-fullstack-test-web:latest --name projectpulse
+```
+
+### 3. Install ingress controller
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+```
+
+### 4. Deploy dengan Helm
+```bash
+helm install projectpulse k8s/helm/projectpulse \
+  --set secrets.APP_KEY="$(php -r 'echo base64_encode(random_bytes(32));')" \
+  --set secrets.DB_USERNAME="projectpulse" \
+  --set secrets.DB_PASSWORD="change_me" \
+  --set secrets.LLM_API_KEY="sk-..." \
+  --set backend.env.APP_URL="http://projectpulse.local"
+```
+
+### 5. Akses
+```bash
+# Tambahkan ke /etc/hosts:
+echo "$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[0].address}')  projectpulse.local" | sudo tee -a /etc/hosts
+
+# Buka: http://projectpulse.local
+```
+
+### Deploy tanpa Helm (raw YAML)
+```bash
+# Copy & isi secret.yaml, lalu:
+kubectl apply -f k8s/
+```
+
+---
+
+## Akun Seed
+
+| Role | Email | Password | Profesi |
+|---|---|---|---|
+| Admin | admin@projectpulse.test | password | — |
+| Member | developer1@projectpulse.test | password | developer |
+| Member | developer2@projectpulse.test | password | developer |
+| Member | designer1@projectpulse.test | password | designer |
+
+---
+
+## Testing
+
+```bash
+# Backend (139+ tests)
+cd backend && php artisan test
+
+# Mobile (unit)
+cd mobile && npm run test.unit
+
+# Mobile (e2e with Cypress)
+cd mobile && npm run test.e2e
+```
+
+---
+
+## Struktur Folder
 
 ```
 project-root/
-├── backend/
-│   ├── app/ (routes/controllers, models, services)
-│   ├── app/ml/            -> integrasi LLM API (task_breakdown_client.py|ts)
-│   ├── tests/
-│   ├── Dockerfile
-│   └── .env.example
-├── web/                   -> dashboard admin/PM (Next.js/React, atau blade)
-│   ├── src/{pages,components,services,hooks}
+├── backend/               # Laravel API
+│   ├── app/
+│   │   ├── Enums/         # UserRole, TaskStatus, dll
+│   │   ├── Http/
+│   │   │   ├── Controllers/   # Auth, Client, Project, Task, Report, AI
+│   │   │   ├── Middleware/    # EnsureUserHasRole
+│   │   │   ├── Requests/     # Form Request validation
+│   │   │   └── Resources/    # API Resource transformers
+│   │   ├── Models/        # User, Client, Project, Task, TimeLog, Notification
+│   │   ├── Services/      # AIBreakdownService
+│   │   └── ml/            # ML dokumentasi
+│   ├── database/
+│   │   ├── factories/     # Seeder factories
+│   │   ├── migrations/    # 12 migrations
+│   │   └── seeders/       # DatabaseSeeder
+│   ├── routes/api.php     # Semua API routes
+│   ├── tests/             # PHPUnit tests
 │   └── Dockerfile
-├── mobile/                -> Ionic (diutamakan) / React Native / Flutter
-│   └── src/ atau lib/{screens,components,services}
+├── web/                   # React admin dashboard
+│   ├── src/
+│   │   ├── pages/         # Dashboard, Clients, Projects, Tasks, AI, Reports
+│   │   ├── components/    # UI components
+│   │   ├── services/      # API clients (axios)
+│   │   ├── routes/        # React Router
+│   │   └── types/         # TypeScript types
+│   └── Dockerfile         # multi-stage build
+├── mobile/                # Ionic React (member app)
+│   ├── src/
+│   │   ├── pages/         # Login, Tasks, TaskDetail, Notifications, Profile
+│   │   └── services/      # API clients
+│   └── Dockerfile         # (tidak wajib, tidak dibuild)
 ├── k8s/
-│   ├── backend-deployment.yaml
-│   ├── backend-service.yaml
-│   ├── web-deployment.yaml
-│   ├── web-service.yaml
-│   ├── configmap.yaml
-│   ├── secret.example.yaml
-│   └── ingress.yaml
-├── docker-compose.yml     -> dev lokal (wajib)
-└── docs/architecture.md
+│   ├── helm/projectpulse/ # Helm chart
+│   └── *.yaml             # Raw K8s manifests
+├── docs/
+│   ├── api/               # API documentation (OpenAPI 3.0)
+│   └── architecture.md    # Decision document
+└── docker-compose.yml
 ```
 
 ---
 
-## Git/GitHub
+## API Documentation
 
-- Histori commit **granular & bermakna** (bukan satu commit besar "final code").
-- Pakai branch — minimal `main` + 1 feature branch, meski dikerjakan sendiri.
+Dokumentasi lengkap (OpenAPI 3.0) tersedia di:
 
-## Isi README Submission (di root repo)
+```
+docs/api/openapi.yaml
+```
 
-Instruksi menjalankan ketiganya via `docker-compose up` (dev) **dan** `kubectl apply -f k8s/` (cluster lokal), cara akses service setelah deploy, cara jalankan mobile di emulator/simulator (+ screenshot/video jika device fisik tak ada), serta link portofolio pribadi (nilai tambah).
+Bisa di-import ke **Postman**, **Bruno**, **Swagger Editor**, atau **Redoc**.
 
----
+**Endpoint utama:**
 
-## Kriteria Penilaian
-
-Setiap aspek dinilai **1–5** oleh reviewer × bobot → skor akhir **0–100**.
-
-| Aspek | Bobot |
-|---|---|
-| Web Development & Containerization/Orchestration (backend API, dashboard web, Docker, Kubernetes) | 30% |
-| Mobile Development (implementasi + kesesuaian stack) | 20% |
-| Integrasi ML & Error Handling/Resiliency | 25% |
-| Autentikasi, Role-based Access & Database Design | 15% |
-| Git/GitHub Practice & Dokumentasi | 10% |
-
-**Catatan alokasi:**
-- **Web/Orchestration (30%):** porsi signifikan khusus untuk kebenaran & kelengkapan Docker + manifest Kubernetes — bukan sekadar pelengkap.
-- **Mobile (20%):** ~15% kualitas implementasi (setara Ionic/RN/Flutter) + ~5% kesesuaian stack (penuh Ionic, sebagian RN, minimal Flutter).
-- **Git & Dokumentasi (10%):** terbagi rata antara histori commit/branching dan kelengkapan README + `docs/architecture.md`.
-
----
-
-## Bonus Challenge
-
-- CI/CD (GitHub Actions): lint/test → build & push image Docker tiap push ke `main`.
-- Helm chart sederhana sebagai pembungkus manifest K8s (menggantikan raw YAML di `k8s/`).
-- Horizontal Pod Autoscaler (HPA) pada Deployment `backend` + penjelasan trigger scaling.
-- Build APK (Android)/IPA siap-install untuk demo tanpa setup environment.
-- `docs/architecture.md` menjelaskan alasan pemilihan Laravel vs Next.js & Ionic vs RN vs Flutter untuk kasus ini.
+| Method | Endpoint | Auth |
+|---|---|---|
+| POST | /api/auth/admin/login | Public |
+| POST | /api/auth/member/login | Public |
+| GET | /api/auth/me | Bearer |
+| GET/POST | /api/admin/clients | Admin |
+| GET/POST | /api/admin/projects | Admin |
+| GET/POST | /api/admin/tasks | Admin |
+| GET | /api/admin/reports/work-hours | Admin |
+| GET | /api/admin/reports/work-hours/export | Admin (CSV) |
+| POST | /api/admin/ai/breakdown | Admin |
+| GET | /api/mobile/tasks | Member |
+| PATCH | /api/mobile/tasks/{id}/status | Member |
+| POST | /api/mobile/tasks/{id}/time-logs | Member |
+| GET | /api/mobile/notifications | Member |
 
 ---
 
-*Dokumen Rekrutmen Bilcode Technology — Rahasia. Pertanyaan seputar teknis/deadline: hubungi recruiter melalui kanal yang telah diberikan.*
+## Fitur
+
+- **CRUD** Klien, Proyek, Task (admin via web)
+- **Mobile** Lihat task, update status, log waktu, notifikasi (member)
+- **AI** Task breakdown dari PRD brief (OpenRouter / Gemini)
+- **Reports** Work hours dengan filter & export CSV
+- **Token Auth** Sanctum — lintas web & mobile
+- **Docker** + **Docker Compose** — dev lokal
+- **Kubernetes** Helm chart + raw manifests

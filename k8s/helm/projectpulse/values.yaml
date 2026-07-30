@@ -1,0 +1,76 @@
+# Global labels and app name
+global:
+  appName: projectpulse
+  partOf: projectpulse
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  host: projectpulse.local
+
+# Backend service
+backend:
+  name: projectpulse-backend
+  component: api
+  image: projectpulse-backend:local
+  pullPolicy: IfNotPresent
+  replicas: 1
+  port: 8000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  env:
+    APP_NAME: "ProjectPulse"
+    APP_ENV: "production"
+    APP_DEBUG: "false"
+    APP_URL: "http://projectpulse.local"
+    DB_CONNECTION: "pgsql"
+    DB_HOST: "projectpulse-postgres"
+    DB_PORT: "5432"
+    DB_DATABASE: "projectpulse"
+    FRONTEND_URL: "http://projectpulse.local"
+    MOBILE_URL: "http://localhost:8100"
+
+# Web frontend
+web:
+  name: projectpulse-web
+  component: web
+  image: projectpulse-web:local
+  pullPolicy: IfNotPresent
+  replicas: 1
+  port: 80
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+# PostgreSQL database
+postgres:
+  name: projectpulse-postgres
+  component: database
+  image: postgres:16-alpine
+  pullPolicy: IfNotPresent
+  port: 5432
+  storageSize: 1Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+# Secrets (values NOT to be committed raw; override via --set or external secrets)
+secrets:
+  APP_KEY: "REPLACE_WITH_LARAVEL_APP_KEY"
+  DB_USERNAME: "projectpulse"
+  DB_PASSWORD: "projectpulse_change_me"
+  LLM_API_KEY: ""

@@ -1,0 +1,1846 @@
+openapi: 3.0.3
+info:
+  title: ProjectPulse API
+  description: |
+    ProjectPulse — Platform Manajemen Klien & Proyek Internal.
+    Backend Laravel 13 dengan Sanctum token auth untuk web (admin) dan mobile (member).
+
+    Base URL: `http://localhost:8000/api`
+
+    Autentikasi: Bearer token (dari login).
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000/api
+    description: Local Docker development
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+              example:
+                success: true
+                message: ProjectPulse backend is healthy
+                data:
+                  status: ok
+                  service: projectpulse-backend
+
+  /auth/admin/login:
+    post:
+      tags: [Authentication]
+      summary: Admin login
+      operationId: adminLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: admin@projectpulse.test
+                password:
+                  type: string
+                  format: password
+                  example: password
+                device_name:
+                  type: string
+                  example: web-browser
+      responses:
+        "201":
+          description: Admin login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Wrong role for this endpoint
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /auth/member/login:
+    post:
+      tags: [Authentication]
+      summary: Member login
+      operationId: memberLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: developer1@projectpulse.test
+                password:
+                  type: string
+                  format: password
+                  example: password
+                device_name:
+                  type: string
+                  example: ionic-local
+      responses:
+        "201":
+          description: Member login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Wrong role for this endpoint
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get current authenticated user
+      operationId: getMe
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Authenticated user retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Logout and revoke current token
+      operationId: logout
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /auth/profile:
+    put:
+      tags: [Authentication]
+      summary: Update profile name
+      operationId: updateProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  example: Updated Name
+      responses:
+        "200":
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /admin/clients:
+    get:
+      tags: [Admin - Clients]
+      summary: List clients
+      operationId: listClients
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema: { type: string }
+          description: Search name, email, company
+        - name: company
+          in: query
+          schema: { type: string }
+          description: Filter by company
+        - name: per_page
+          in: query
+          schema: { type: integer, default: 10, maximum: 100 }
+        - name: sort
+          in: query
+          schema: { type: string, enum: [name, company, created_at, updated_at], default: created_at }
+        - name: direction
+          in: query
+          schema: { type: string, enum: [asc, desc], default: desc }
+      responses:
+        "200":
+          description: Clients retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Client"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      tags: [Admin - Clients]
+      summary: Create client
+      operationId: createClient
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email]
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  example: PT Example Indonesia
+                email:
+                  type: string
+                  format: email
+                  example: client@example.test
+                company:
+                  type: string
+                  maxLength: 255
+                  example: Example Group
+      responses:
+        "201":
+          description: Client created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    $ref: "#/components/schemas/Client"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /admin/clients/{id}:
+    get:
+      tags: [Admin - Clients]
+      summary: Show client
+      operationId: showClient
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Client retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    $ref: "#/components/schemas/Client"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [Admin - Clients]
+      summary: Update client (full)
+      operationId: updateClientPut
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, example: PT Updated }
+                email: { type: string, format: email }
+                company: { type: string }
+      responses:
+        "200":
+          description: Client updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    $ref: "#/components/schemas/Client"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+    patch:
+      tags: [Admin - Clients]
+      summary: Update client (partial)
+      operationId: updateClientPatch
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                company: { type: string }
+      responses:
+        "200":
+          description: Client updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    $ref: "#/components/schemas/Client"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+    delete:
+      tags: [Admin - Clients]
+      summary: Delete client
+      operationId: deleteClient
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Client deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Conflict - client has related projects
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/projects:
+    get:
+      tags: [Admin - Projects]
+      summary: List projects
+      operationId: listProjects
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema: { type: string }
+          description: Search name, brief, client name, client company
+        - name: client_id
+          in: query
+          schema: { type: integer }
+          description: Filter by client ID
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [planning, active, completed, cancelled]
+        - name: deadline_from
+          in: query
+          schema: { type: string, format: date }
+        - name: deadline_to
+          in: query
+          schema: { type: string, format: date }
+        - name: overdue
+          in: query
+          schema: { type: boolean }
+          description: Deadline before today and status not completed/cancelled
+        - name: per_page
+          in: query
+          schema: { type: integer, default: 10, maximum: 100 }
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [name, deadline, status, created_at, updated_at]
+            default: created_at
+        - name: direction
+          in: query
+          schema: { type: string, enum: [asc, desc], default: desc }
+      responses:
+        "200":
+          description: Projects retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Project"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      tags: [Admin - Projects]
+      summary: Create project
+      operationId: createProject
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [client_id, name]
+              properties:
+                client_id:
+                  type: integer
+                  example: 1
+                name:
+                  type: string
+                  maxLength: 255
+                  example: ProjectPulse Website
+                brief:
+                  type: string
+                  example: Build a project management platform
+                deadline:
+                  type: string
+                  format: date
+                  example: "2026-09-30"
+                status:
+                  type: string
+                  enum: [planning, active, completed, cancelled]
+                  default: planning
+      responses:
+        "201":
+          description: Project created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    $ref: "#/components/schemas/Project"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /admin/projects/{id}:
+    get:
+      tags: [Admin - Projects]
+      summary: Show project
+      operationId: showProject
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Project retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    $ref: "#/components/schemas/Project"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [Admin - Projects]
+      summary: Update project (full)
+      operationId: updateProjectPut
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                client_id: { type: integer }
+                name: { type: string }
+                brief: { type: string, nullable: true }
+                deadline: { type: string, format: date, nullable: true }
+                status:
+                  type: string
+                  enum: [planning, active, completed, cancelled]
+      responses:
+        "200":
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    $ref: "#/components/schemas/Project"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+    patch:
+      tags: [Admin - Projects]
+      summary: Update project (partial)
+      operationId: updateProjectPatch
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                client_id: { type: integer }
+                name: { type: string }
+                brief: { type: string, nullable: true }
+                deadline: { type: string, format: date, nullable: true }
+                status:
+                  type: string
+                  enum: [planning, active, completed, cancelled]
+      responses:
+        "200":
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    $ref: "#/components/schemas/Project"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+    delete:
+      tags: [Admin - Projects]
+      summary: Delete project
+      operationId: deleteProject
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Project deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Conflict - project has related tasks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/tasks:
+    get:
+      tags: [Admin - Tasks]
+      summary: List tasks
+      operationId: listTasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema: { type: string }
+          description: Search title, description, project name, assignee name/email
+        - name: project_id
+          in: query
+          schema: { type: integer }
+        - name: client_id
+          in: query
+          schema: { type: integer }
+        - name: assignee_id
+          in: query
+          schema: { type: integer }
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [frontend, backend, design, qa]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [todo, in_progress, review, done]
+        - name: deadline_from
+          in: query
+          schema: { type: string, format: date }
+        - name: deadline_to
+          in: query
+          schema: { type: string, format: date }
+        - name: overdue
+          in: query
+          schema: { type: boolean }
+        - name: unassigned
+          in: query
+          schema: { type: boolean }
+        - name: per_page
+          in: query
+          schema: { type: integer, default: 10, maximum: 100 }
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [title, deadline, status, category, estimated_effort, created_at, updated_at]
+            default: created_at
+        - name: direction
+          in: query
+          schema: { type: string, enum: [asc, desc], default: desc }
+      responses:
+        "200":
+          description: Tasks retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Task"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      tags: [Admin - Tasks]
+      summary: Create task
+      operationId: createTask
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [project_id, title, category]
+              properties:
+                project_id:
+                  type: integer
+                  example: 1
+                assignee_id:
+                  type: integer
+                  nullable: true
+                  example: 2
+                title:
+                  type: string
+                  maxLength: 255
+                  example: Implement authentication API
+                description:
+                  type: string
+                  maxLength: 5000
+                  nullable: true
+                category:
+                  type: string
+                  enum: [frontend, backend, design, qa]
+                  example: backend
+                estimated_effort:
+                  type: integer
+                  minimum: 1
+                  maximum: 80
+                  nullable: true
+                  example: 8
+                deadline:
+                  type: string
+                  format: date
+                  nullable: true
+                status:
+                  type: string
+                  enum: [todo, in_progress, review, done]
+                  default: todo
+      responses:
+        "201":
+          description: Task created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    $ref: "#/components/schemas/Task"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /admin/tasks/{id}:
+    get:
+      tags: [Admin - Tasks]
+      summary: Show task
+      operationId: showTask
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Task retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    $ref: "#/components/schemas/Task"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [Admin - Tasks]
+      summary: Update task (full)
+      operationId: updateTaskPut
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id: { type: integer }
+                assignee_id: { type: integer, nullable: true }
+                title: { type: string }
+                description: { type: string, nullable: true }
+                category:
+                  type: string
+                  enum: [frontend, backend, design, qa]
+                estimated_effort: { type: integer, nullable: true }
+                deadline: { type: string, format: date, nullable: true }
+                status:
+                  type: string
+                  enum: [todo, in_progress, review, done]
+      responses:
+        "200":
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    $ref: "#/components/schemas/Task"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+    patch:
+      tags: [Admin - Tasks]
+      summary: Update task (partial)
+      operationId: updateTaskPatch
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id: { type: integer }
+                assignee_id: { type: integer, nullable: true }
+                title: { type: string }
+                description: { type: string, nullable: true }
+                category:
+                  type: string
+                  enum: [frontend, backend, design, qa]
+                estimated_effort: { type: integer, nullable: true }
+                deadline: { type: string, format: date, nullable: true }
+                status:
+                  type: string
+                  enum: [todo, in_progress, review, done]
+      responses:
+        "200":
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    $ref: "#/components/schemas/Task"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+    delete:
+      tags: [Admin - Tasks]
+      summary: Delete task
+      operationId: deleteTask
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Task deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Conflict - task has work history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/members:
+    get:
+      tags: [Admin - Members]
+      summary: List members for task assignment
+      operationId: listMembers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema: { type: string }
+          description: Search member name and email
+        - name: profession
+          in: query
+          schema:
+            type: string
+            enum: [developer, designer]
+        - name: per_page
+          in: query
+          schema: { type: integer, default: 25, maximum: 100 }
+      responses:
+        "200":
+          description: Members retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Member"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /admin/dashboard/summary:
+    get:
+      tags: [Admin - Dashboard]
+      summary: Get admin dashboard summary
+      operationId: dashboardSummary
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    type: object
+                    properties:
+                      stats:
+                        type: object
+                        properties:
+                          total_clients: { type: integer }
+                          total_projects: { type: integer }
+                          total_tasks: { type: integer }
+                          total_members: { type: integer }
+                          tasks_overdue: { type: integer }
+                          tasks_by_status:
+                            type: object
+                            properties:
+                              todo: { type: integer }
+                              in_progress: { type: integer }
+                              review: { type: integer }
+                              done: { type: integer }
+                          projects_by_status:
+                            type: object
+                            properties:
+                              planning: { type: integer }
+                              active: { type: integer }
+                              completed: { type: integer }
+                              cancelled: { type: integer }
+                      recent_time_logs:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id: { type: integer }
+                            member_name: { type: string }
+                            task_title: { type: string }
+                            project_name: { type: string }
+                            duration_minutes: { type: integer }
+                            note: { type: string, nullable: true }
+                            work_date: { type: string, format: date }
+                      member_workload:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id: { type: integer }
+                            name: { type: string }
+                            profession: { type: string, nullable: true }
+                            assigned_tasks: { type: integer }
+                            total_logged_hours: { type: number }
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /admin/ai/breakdown:
+    post:
+      tags: [Admin - AI]
+      summary: Generate task suggestions from PRD text
+      operationId: aiBreakdown
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prd_text]
+              properties:
+                prd_text:
+                  type: string
+                  minLength: 10
+                  maxLength: 50000
+                  example: |
+                    We need a customer portal where users can log in, view their invoices, and make payments.
+                    Features: user authentication, invoice listing with filters, payment gateway integration,
+                    email notifications for due invoices.
+      responses:
+        "200":
+          description: Tasks generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GeneratedTask"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+        "503":
+          description: AI service unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [false] }
+                  message: { type: string }
+
+  /admin/ai/save-tasks:
+    post:
+      tags: [Admin - AI]
+      summary: Save AI-generated tasks to a project
+      operationId: aiSaveTasks
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [project_id, tasks]
+              properties:
+                project_id:
+                  type: integer
+                  example: 1
+                tasks:
+                  type: array
+                  minItems: 1
+                  maxItems: 50
+                  items:
+                    type: object
+                    required: [title, category, status]
+                    properties:
+                      title:
+                        type: string
+                        maxLength: 255
+                      description:
+                        type: string
+                        maxLength: 5000
+                        nullable: true
+                      category:
+                        type: string
+                        enum: [frontend, backend, design, qa]
+                      estimated_effort:
+                        type: integer
+                        minimum: 1
+                        maximum: 80
+                        nullable: true
+                      status:
+                        type: string
+                        enum: [todo]
+      responses:
+        "201":
+          description: Tasks saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data: { type: integer, description: Number of tasks saved }
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /mobile/profile:
+    get:
+      tags: [Mobile - Profile]
+      summary: Get member profile
+      operationId: mobileProfile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+    put:
+      tags: [Mobile - Profile]
+      summary: Update member profile name
+      operationId: mobileUpdateProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, maxLength: 255 }
+      responses:
+        "200":
+          $ref: "#/components/responses/Unauthenticated"
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /mobile/tasks:
+    get:
+      tags: [Mobile - Tasks]
+      summary: List tasks assigned to current member
+      operationId: mobileListTasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [todo, in_progress, review, done]
+          description: Filter by status
+      responses:
+        "200":
+          description: Tasks retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Task"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /mobile/tasks/{id}:
+    get:
+      tags: [Mobile - Tasks]
+      summary: Show task detail
+      operationId: mobileShowTask
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Task retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    $ref: "#/components/schemas/Task"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /mobile/tasks/{id}/status:
+    patch:
+      tags: [Mobile - Tasks]
+      summary: Update task status
+      operationId: mobileUpdateTaskStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [todo, in_progress, review, done]
+      responses:
+        "200":
+          description: Task status updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    $ref: "#/components/schemas/Task"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Task not assigned to this member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /mobile/tasks/{id}/time-logs:
+    get:
+      tags: [Mobile - Time Logs]
+      summary: List time logs for a task
+      operationId: mobileListTimeLogs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Time logs retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TimeLog"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    post:
+      tags: [Mobile - Time Logs]
+      summary: Create time log for a task
+      operationId: mobileCreateTimeLog
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [duration_minutes]
+              properties:
+                duration_minutes:
+                  type: integer
+                  minimum: 1
+                  maximum: 1440
+                  example: 120
+                note:
+                  type: string
+                  maxLength: 1000
+                  nullable: true
+                  example: Worked on API endpoints
+                work_date:
+                  type: string
+                  format: date
+                  example: "2026-07-30"
+      responses:
+        "201":
+          description: Time log created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    $ref: "#/components/schemas/TimeLog"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /mobile/notifications:
+    get:
+      tags: [Mobile - Notifications]
+      summary: List notifications for current member
+      operationId: mobileListNotifications
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Notifications retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Notification"
+                  meta:
+                    type: object
+                    properties:
+                      unread_count: { type: integer }
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+
+  /mobile/notifications/{id}/read:
+    patch:
+      tags: [Mobile - Notifications]
+      summary: Mark notification as read
+      operationId: mobileMarkNotificationRead
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    $ref: "#/components/schemas/Notification"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: PlainText
+      description: Bearer token obtained from login (admin or member)
+
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        message:
+          type: string
+        data:
+          type: object
+      example:
+        success: true
+        message: Action successful
+        data: {}
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        message:
+          type: string
+        errors:
+          type: object
+      example:
+        success: false
+        message: Resource not found.
+        errors: {}
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        message:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+      example:
+        success: false
+        message: Validation failed
+        errors:
+          name: ["The name field is required."]
+          email: ["The email field must be a valid email address."]
+
+    PaginatedResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        message: { type: string }
+        meta:
+          type: object
+          properties:
+            current_page: { type: integer }
+            last_page: { type: integer }
+            per_page: { type: integer }
+            total: { type: integer }
+        links:
+          type: object
+          properties:
+            first: { type: string, nullable: true }
+            last: { type: string, nullable: true }
+            prev: { type: string, nullable: true }
+            next: { type: string, nullable: true }
+
+    LoginResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        message: { type: string }
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+            token_type:
+              type: string
+              enum: [Bearer]
+            user:
+              $ref: "#/components/schemas/User"
+
+    UserResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        message: { type: string }
+        data:
+          type: object
+          properties:
+            user:
+              $ref: "#/components/schemas/User"
+
+    User:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { type: string, enum: [admin, member] }
+        profession: { type: string, nullable: true, enum: [developer, designer] }
+      example:
+        id: 1
+        name: ProjectPulse Admin
+        email: admin@projectpulse.test
+        role: admin
+        profession: null
+
+    Client:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string, format: email }
+        company: { type: string }
+        projects_count: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Project:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        brief: { type: string, nullable: true }
+        deadline: { type: string, format: date, nullable: true }
+        status:
+          type: string
+          enum: [planning, active, completed, cancelled]
+        client:
+          type: object
+          properties:
+            id: { type: integer }
+            name: { type: string }
+            company: { type: string }
+        tasks_count: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Task:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        description: { type: string, nullable: true }
+        category:
+          type: string
+          enum: [frontend, backend, design, qa]
+        estimated_effort: { type: integer, nullable: true }
+        deadline: { type: string, format: date, nullable: true }
+        status:
+          type: string
+          enum: [todo, in_progress, review, done]
+        project:
+          type: object
+          properties:
+            id: { type: integer }
+            name: { type: string }
+            status:
+              type: string
+              enum: [planning, active, completed, cancelled]
+            client:
+              type: object
+              properties:
+                id: { type: integer }
+                name: { type: string }
+                company: { type: string }
+        assignee:
+          type: object
+          nullable: true
+          properties:
+            id: { type: integer }
+            name: { type: string }
+            email: { type: string, format: email }
+            profession: { type: string, nullable: true }
+        progress_logs_count: { type: integer }
+        time_logs_count: { type: integer }
+        total_logged_minutes: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Member:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string, format: email }
+        profession: { type: string, nullable: true, enum: [developer, designer] }
+        assigned_tasks_count: { type: integer }
+
+    GeneratedTask:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+        category:
+          type: string
+          enum: [frontend, backend, design, qa]
+        estimated_effort: { type: integer }
+        status: { type: string, enum: [todo] }
+
+    TimeLog:
+      type: object
+      properties:
+        id: { type: integer }
+        task_id: { type: integer }
+        user_id: { type: integer }
+        work_date: { type: string, format: date }
+        duration_minutes: { type: integer }
+        note: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Notification:
+      type: object
+      properties:
+        id: { type: integer }
+        user_id: { type: integer }
+        task_id: { type: integer, nullable: true }
+        type:
+          type: string
+          enum: [task_assigned, deadline_reminder]
+        message: { type: string }
+        read_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        task:
+          type: object
+          nullable: true
+          properties:
+            id: { type: integer }
+            title: { type: string }
+
+  responses:
+    Unauthenticated:
+      description: Unauthenticated
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: Unauthenticated.
+            errors: {}
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: Forbidden.
+            errors: {}
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            message: Resource not found.
+            errors: {}
