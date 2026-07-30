@@ -129,12 +129,12 @@ class ClientCrudTest extends TestCase
         ]);
     }
 
-    public function test_admin_can_list_clients_from_public_api_clients_path(): void
+    public function test_admin_can_list_clients_from_admin_path(): void
     {
         Client::factory()->count(2)->create();
 
         $this->actingAsAdmin()
-            ->getJson('/api/clients')
+            ->getJson('/api/admin/clients')
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonCount(2, 'data');

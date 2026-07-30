@@ -65,6 +65,21 @@ class DatabaseSeeder extends Seeder
                 'email' => 'hello@northwind.test',
                 'company' => 'Northwind',
             ]),
+            Client::factory()->create([
+                'name' => 'Merpati Teknologi',
+                'email' => 'info@merpati-tekno.test',
+                'company' => 'Merpati Teknologi',
+            ]),
+            Client::factory()->create([
+                'name' => 'Garuda Digital Solutions',
+                'email' => 'hello@garudadigital.test',
+                'company' => 'Garuda Digital',
+            ]),
+            Client::factory()->create([
+                'name' => 'Bumi Resources',
+                'email' => 'it@bumiresources.test',
+                'company' => 'Bumi Resources',
+            ]),
         ]);
 
         $projects = collect([
@@ -79,6 +94,14 @@ class DatabaseSeeder extends Seeder
             Project::factory()->for($clients[1])->create([
                 'name' => 'Mobile Reporting Workflow',
                 'status' => ProjectStatus::COMPLETED,
+            ]),
+            Project::factory()->for($clients[2])->create([
+                'name' => 'E-Commerce Platform',
+                'status' => ProjectStatus::PLANNING,
+            ]),
+            Project::factory()->for($clients[3])->create([
+                'name' => 'Mobile App Redesign',
+                'status' => ProjectStatus::ACTIVE,
             ]),
         ]);
 
@@ -99,6 +122,22 @@ class DatabaseSeeder extends Seeder
                 'title' => 'Validate mobile task navigation',
                 'category' => TaskCategory::QA,
             ]),
+            Task::factory()->for($projects[3])->status(TaskStatus::TODO)->create([
+                'title' => 'Design product catalog schema',
+                'category' => TaskCategory::BACKEND,
+            ]),
+            Task::factory()->for($projects[3])->status(TaskStatus::TODO)->create([
+                'title' => 'Setup payment gateway integration',
+                'category' => TaskCategory::BACKEND,
+            ]),
+            Task::factory()->for($projects[4])->for($developerTwo, 'assignee')->status(TaskStatus::TODO)->create([
+                'title' => 'Implement new design system tokens',
+                'category' => TaskCategory::FRONTEND,
+            ]),
+            Task::factory()->for($projects[4])->for($designer, 'assignee')->status(TaskStatus::IN_PROGRESS)->create([
+                'title' => 'Create component mockups',
+                'category' => TaskCategory::DESIGN,
+            ]),
         ]);
 
         ProgressLog::factory()->for($tasks[1])->for($developerTwo, 'user')->count(2)->create();
@@ -116,6 +155,12 @@ class DatabaseSeeder extends Seeder
         Notification::factory()->for($designer, 'user')->for($tasks[2])->create([
             'type' => NotificationType::DEADLINE_REMINDER,
             'message' => 'Review deadline is approaching.',
+            'read_at' => null,
+        ]);
+
+        Notification::factory()->for($developerTwo, 'user')->for($tasks[6])->create([
+            'type' => NotificationType::TASK_ASSIGNED,
+            'message' => 'You have been assigned to Implement new design system tokens.',
             'read_at' => null,
         ]);
 

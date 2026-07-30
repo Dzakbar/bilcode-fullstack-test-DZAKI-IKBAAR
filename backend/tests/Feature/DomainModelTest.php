@@ -140,11 +140,11 @@ class DomainModelTest extends TestCase
             ]);
         }
 
-        $this->assertSame(2, Client::count());
-        $this->assertSame(3, Project::count());
-        $this->assertGreaterThanOrEqual(4, Task::count());
+        $this->assertSame(5, Client::count());
+        $this->assertSame(5, Project::count());
+        $this->assertGreaterThanOrEqual(8, Task::count());
         $this->assertGreaterThanOrEqual(3, ProgressLog::count());
         $this->assertGreaterThanOrEqual(3, TimeLog::count());
-        $this->assertGreaterThanOrEqual(3, Notification::count());
+        $this->assertGreaterThanOrEqual(4, Notification::count());
     }
 }

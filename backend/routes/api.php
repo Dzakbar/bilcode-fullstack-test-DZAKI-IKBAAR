@@ -56,6 +56,12 @@ Route::middleware(['auth:sanctum', 'role:admin'])
         Route::get('members', [MemberController::class, 'index']);
         Route::get('dashboard/summary', [\App\Http\Controllers\DashboardController::class, 'summary']);
 
+        Route::prefix('reports')->group(function (): void {
+            Route::get('/work-hours', [\App\Http\Controllers\Admin\ReportController::class, 'workHours']);
+            Route::get('/work-hours/export', [\App\Http\Controllers\Admin\ReportController::class, 'exportCsv']);
+            Route::get('/projects', [\App\Http\Controllers\Admin\ReportController::class, 'projects']);
+        });
+
         Route::prefix('ai')->group(function (): void {
             Route::post('/breakdown', [\App\Http\Controllers\Admin\AIController::class, 'breakdown']);
             Route::post('/save-tasks', [\App\Http\Controllers\Admin\AIController::class, 'saveTasks']);
