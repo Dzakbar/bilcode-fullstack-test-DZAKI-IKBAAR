@@ -17,29 +17,29 @@ function toPayload(data: ClientFormData): ClientPayload {
 }
 
 export async function getClients(): Promise<ApiPaginatedResponse<Client>> {
-  const response = await apiClient.get<ApiPaginatedResponse<Client>>('/clients')
+  const response = await apiClient.get<ApiPaginatedResponse<Client>>('/admin/clients')
 
   return response.data
 }
 
 export async function getClient(id: string | number): Promise<Client> {
-  const response = await apiClient.get<ApiSuccessResponse<Client>>(`/clients/${id}`)
+  const response = await apiClient.get<ApiSuccessResponse<Client>>(`/admin/clients/${id}`)
 
   return response.data.data
 }
 
 export async function createClient(data: ClientFormData): Promise<Client> {
-  const response = await apiClient.post<ApiSuccessResponse<Client>>('/clients', toPayload(data))
+  const response = await apiClient.post<ApiSuccessResponse<Client>>('/admin/clients', toPayload(data))
 
   return response.data.data
 }
 
 export async function updateClient(id: string | number, data: ClientFormData): Promise<Client> {
-  const response = await apiClient.put<ApiSuccessResponse<Client>>(`/clients/${id}`, toPayload(data))
+  const response = await apiClient.put<ApiSuccessResponse<Client>>(`/admin/clients/${id}`, toPayload(data))
 
   return response.data.data
 }
 
 export async function deleteClient(id: string | number): Promise<void> {
-  await apiClient.delete<ApiSuccessResponse<Record<string, never>>>(`/clients/${id}`)
+  await apiClient.delete<ApiSuccessResponse<Record<string, never>>>(`/admin/clients/${id}`)
 }

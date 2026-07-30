@@ -17,6 +17,8 @@ const emptyForm: ProjectFormData = {
   name: '',
   client_id: '',
   status: 'active',
+  description: '',
+  due_date: '',
 }
 
 function firstFieldError(errors: Record<string, string[]> | undefined, field: string): string | undefined {
@@ -27,7 +29,9 @@ function projectToFormData(project: Project): ProjectFormData {
   return {
     name: project.name,
     client_id: String(project.client?.id ?? ''),
-    status: project.status === 'completed' ? 'completed' : 'active',
+    status: project.status,
+    description: project.brief ?? '',
+    due_date: project.deadline ?? '',
   }
 }
 
@@ -180,6 +184,8 @@ export function ProjectsPage() {
         name: firstFieldError(details.fieldErrors, 'name'),
         client_id: firstFieldError(details.fieldErrors, 'client_id'),
         status: firstFieldError(details.fieldErrors, 'status'),
+        brief: firstFieldError(details.fieldErrors, 'brief'),
+        deadline: firstFieldError(details.fieldErrors, 'deadline'),
       })
       addToast('error', details.message)
     } finally {
@@ -220,12 +226,18 @@ export function ProjectsPage() {
             <div className="font-semibold text-neutral-950">{project.name}</div>
           </td>
           <td className="px-5 py-4 text-neutral-700">{project.client?.name ?? '-'}</td>
+          <td className="px-5 py-4 text-neutral-700">{project.tasks_count ?? 0}</td>
+          <td className="px-5 py-4 text-neutral-700">{project.deadline ?? '-'}</td>
           <td className="px-5 py-4">
             <span
               className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
                 project.status === 'completed'
                   ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : project.status === 'planning'
+                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                    : project.status === 'cancelled'
+                      ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                      : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
               }`}
             >
               {project.status}
@@ -329,6 +341,12 @@ export function ProjectsPage() {
                   </th>
                   <th className="px-5 py-3" scope="col">
                     Client Name
+                  </th>
+                  <th className="px-5 py-3" scope="col">
+                    Tasks Count
+                  </th>
+                  <th className="px-5 py-3" scope="col">
+                    Due Date
                   </th>
                   <th className="px-5 py-3" scope="col">
                     Status

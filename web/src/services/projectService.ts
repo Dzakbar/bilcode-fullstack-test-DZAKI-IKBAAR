@@ -21,29 +21,29 @@ function toPayload(data: ProjectFormData): ProjectPayload {
 }
 
 export async function getProjects(): Promise<ApiPaginatedResponse<Project>> {
-  const response = await apiClient.get<ApiPaginatedResponse<Project>>('/projects')
+  const response = await apiClient.get<ApiPaginatedResponse<Project>>('/admin/projects')
 
   return response.data
 }
 
 export async function getProject(id: string | number): Promise<Project> {
-  const response = await apiClient.get<ApiSuccessResponse<Project>>(`/projects/${id}`)
+  const response = await apiClient.get<ApiSuccessResponse<Project>>(`/admin/projects/${id}`)
 
   return response.data.data
 }
 
 export async function createProject(data: ProjectFormData): Promise<Project> {
-  const response = await apiClient.post<ApiSuccessResponse<Project>>('/projects', toPayload(data))
+  const response = await apiClient.post<ApiSuccessResponse<Project>>('/admin/projects', toPayload(data))
 
   return response.data.data
 }
 
 export async function updateProject(id: string | number, data: ProjectFormData): Promise<Project> {
-  const response = await apiClient.put<ApiSuccessResponse<Project>>(`/projects/${id}`, toPayload(data))
+  const response = await apiClient.put<ApiSuccessResponse<Project>>(`/admin/projects/${id}`, toPayload(data))
 
   return response.data.data
 }
 
 export async function deleteProject(id: string | number): Promise<void> {
-  await apiClient.delete<ApiSuccessResponse<Record<string, never>>>(`/projects/${id}`)
+  await apiClient.delete<ApiSuccessResponse<Record<string, never>>>(`/admin/projects/${id}`)
 }

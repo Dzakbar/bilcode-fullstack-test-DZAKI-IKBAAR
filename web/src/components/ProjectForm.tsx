@@ -17,6 +17,7 @@ interface ProjectFormProps {
 }
 
 const statusOptions: { value: ProjectStatus; label: string }[] = [
+  { value: 'planning', label: 'Planning' },
   { value: 'active', label: 'Active' },
   { value: 'completed', label: 'Completed' },
 ]
@@ -54,6 +55,25 @@ export function ProjectForm({
       </label>
 
       <label className="grid gap-2">
+        <span className="text-sm font-semibold text-neutral-900">Brief</span>
+        <textarea
+          className="min-h-24 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-950 transition placeholder:text-neutral-400 focus:border-neutral-950 focus:outline-none focus:ring-2 focus:ring-neutral-950/10"
+          name="description"
+          value={data.description ?? ''}
+          placeholder="Project brief or description"
+          rows={4}
+          aria-invalid={Boolean(errors.brief)}
+          aria-describedby={errors.brief ? 'project-brief-error' : undefined}
+          onChange={(event) => onChange('description', event.target.value)}
+        />
+        {errors.brief ? (
+          <span className="text-sm text-red-700" id="project-brief-error">
+            {errors.brief}
+          </span>
+        ) : null}
+      </label>
+
+      <label className="grid gap-2">
         <span className="text-sm font-semibold text-neutral-900">Client *</span>
         <select
           className="h-11 rounded-lg border border-neutral-300 bg-white px-3 text-sm text-neutral-950 transition focus:border-neutral-950 focus:outline-none focus:ring-2 focus:ring-neutral-950/10"
@@ -74,6 +94,24 @@ export function ProjectForm({
         {errors.client_id ? (
           <span className="text-sm text-red-700" id="project-client-error">
             {errors.client_id}
+          </span>
+        ) : null}
+      </label>
+
+      <label className="grid gap-2">
+        <span className="text-sm font-semibold text-neutral-900">Deadline</span>
+        <input
+          className="h-11 rounded-lg border border-neutral-300 bg-white px-3 text-sm text-neutral-950 transition placeholder:text-neutral-400 focus:border-neutral-950 focus:outline-none focus:ring-2 focus:ring-neutral-950/10"
+          name="due_date"
+          type="date"
+          value={data.due_date ?? ''}
+          aria-invalid={Boolean(errors.deadline)}
+          aria-describedby={errors.deadline ? 'project-deadline-error' : undefined}
+          onChange={(event) => onChange('due_date', event.target.value)}
+        />
+        {errors.deadline ? (
+          <span className="text-sm text-red-700" id="project-deadline-error">
+            {errors.deadline}
           </span>
         ) : null}
       </label>

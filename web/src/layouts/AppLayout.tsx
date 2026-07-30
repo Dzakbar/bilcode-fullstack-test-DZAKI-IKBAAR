@@ -19,7 +19,8 @@ export function AppLayout() {
           <SidebarNavItem label="Dashboard" to="/dashboard" />
           <SidebarNavItem label="Clients" to="/clients" />
           <SidebarNavItem label="Projects" to="/projects" />
-          <SidebarNavItem disabled label="Tasks" to="/tasks" />
+          <SidebarNavItem label="Tasks" to="/tasks" />
+          <SidebarNavItem label="AI Breakdown" to="/ai/breakdown" />
         </nav>
       </aside>
       <div className="admin-content">

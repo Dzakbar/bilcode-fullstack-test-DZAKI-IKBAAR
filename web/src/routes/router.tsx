@@ -11,6 +11,9 @@ import { ProtectedRoute } from './ProtectedRoute'
 import { PublicOnlyRoute } from './PublicOnlyRoute'
 import { RootRedirect } from './RootRedirect'
 
+import TasksPage from '../pages/tasks/TasksPage'
+import { AIBreakdownPage } from '../pages/ai/AIBreakdownPage'
+
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -58,6 +61,14 @@ export const router = createBrowserRouter([
           {
             path: '/projects/:id/edit',
             Component: ProjectFormPage,
+          },
+          {
+            path: '/tasks',
+            Component: TasksPage,
+          },
+          {
+            path: '/ai/breakdown',
+            Component: AIBreakdownPage,
           },
         ],
       },
